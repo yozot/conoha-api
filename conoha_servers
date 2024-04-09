@@ -1,0 +1,61 @@
+#!/bin/sh
+## conohav2 api
+
+. conoha_get_token
+tenantID=`conoha_get_tenantID`
+tokenID=`conoha_get_token`
+## echo "tenantID: ${tenantID}" 1>&2
+## echo "tokenID: ${tokenID}" 1>&2
+## exit 100
+
+## compute API: list servers
+## curl -i -X GET \
+##   -H "Accept: application/json" \
+##   -H "X-Auth-Token: ${TokenID}" \
+##   https://compute.tyo1.conoha.io/v2/${TenantID}/servers
+
+help(){
+  echo "$0 [-v] list [detail]" 1>&2
+}
+
+list(){
+  echo ":: list ::" 1>&2
+  if [ $# -ge 1 ]; then
+    DETAIL="/detail"
+    echo "DETAILS" 1>&2
+  fi
+  curl ${FLAG_VERBOSE} -X GET \
+    -H "Accept: application/json" \
+    -H "X-Auth-Token: ${tokenID}" \
+    "https://compute.tyo1.conoha.io/v2/${tenantID}/servers${DETAIL}"
+}
+
+## "--include" option for curl
+FLAG_VERBOSE=""
+if [ "${1}" == "-v" ]; then
+  FLAG_VERBOSE="--include"
+  echo "VERBOSE MODE ON." 1>&2
+  shift
+fi
+
+if [ $# -le 0 ]; then
+  help
+  exit 0
+else
+  case "${1}" in
+    list*)
+      ## echo "arg[1]: ${1}" 1>&2
+      if [ $# -ge 2 ]; then
+        list "${2}"
+      else
+        list
+      fi
+      ;;
+    *)
+      echo "what??" 1>&2
+      help
+      exit 10
+      ;;
+  esac
+fi
+

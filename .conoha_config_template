@@ -1,0 +1,13 @@
+## .conoha_config_template
+## conoha v2 api
+
+api_user="********"
+password="********"
+
+## conoha v2 API accepts only tenantID.
+## conohav3 API accepts both tenantName and tenantID.
+tenantID="********"
+
+## tokenID=""
+## you can get the token from the json data, '.access.token.id'.
+

@@ -1,0 +1,121 @@
+#!/bin/sh
+##  conohav2 api
+
+. conoha_get_token
+tenantID=`conoha_get_tenantID`
+tokenID=`conoha_get_token`
+## echo "tenantID: ${tenantID}" 1>&2
+## echo "tokenID: ${tokenID}" 1>&2
+## exit 100
+
+## compute API: list ISO images
+## curl -i -X GET \
+##   -H "Accept: application/json" \
+##   -H "X-Auth-Token: ${TokenID}" \
+##   https://compute.tyo1.conoha.io/v2/${TenantID}/iso-images
+
+## help (no argument)
+help(){
+  echo "help: $0 [-v] [list|download|mount|unmount] [args]" 1>&2
+  echo "  $0 [-v] list" 1>&2
+  echo "  $0 [-v] download {url}" 1>&2
+  echo "  $0 [-v] mount serverID ISOimagePath" 1>&2
+  echo "  $0 [-v] unmount serverID" 1>&2
+}
+
+## unmount serverID
+unmount(){
+  echo ":: unmount ::" 1>&2
+  echo "serverID: ${1}" 1>&2
+  curl ${FLAG_VERBOSE} --silent -X POST \
+    -H "Accept: application/json" \
+    -H "X-Auth-Token: ${tokenID}" \
+    -d '{"unmountImage": ""}' \
+    "https://compute.tyo1.conoha.io/v2/${tenantID}/servers/${1}/action"
+}
+
+## list (no argument)
+list(){
+  echo ":: list ::" 1>&2
+  curl ${FLAG_VERBOSE} --silent -X GET \
+    -H "Accept: application/json" \
+    -H "X-Auth-Token: ${tokenID}" \
+    "https://compute.tyo1.conoha.io/v2/${tenantID}/iso-images"
+}
+
+## mount serverID ISOimagePath
+mount(){
+  echo ":: mount ::" 1>&2
+  json_mount="{\"mountImage\": \"${2}\"}"
+  echo "serverID: ${1}" 1>&2
+  echo "json_mount: ${json_mount}" 1>&2
+  curl ${FLAG_VERBOSE} --silent -X POST \
+    -H "Accept: application/json" \
+    -H "X-Auth-Token: ${tokenID}" \
+    -d "${json_mount}" \
+    "https://compute.tyo1.conoha.io/v2/${tenantID}/servers/${1}/action"
+}
+
+## download url
+download(){
+  echo ":: download ::" 1>&2
+  json_download="{\"iso-image\": {\"url\": \"${1}\"}}"
+  echo "downloadURL: ${json_download}" 1>&2
+  curl ${FLAG_VERBOSE} --silent -X POST \
+    -H "Accept: application/json" \
+    -H "X-Auth-Token: ${tokenID}" \
+    -d "${json_download}" \
+    "https://compute.tyo1.conoha.io/v2/${tenantID}/iso-images"
+}
+
+## "--include" option for curl
+FLAG_VERBOSE=""
+if [ "${1}" == "-v" ]; then
+  FLAG_VERBOSE="--include"
+  echo "VERBOSE MODE ON." 1>&2
+  shift
+fi
+
+if [ $# -le 0 ]; then
+  help
+  exit 10
+else
+  echo "args: $#" 1>&2
+  ## echo "arg[1]: ${1}" 1>&2
+fi
+
+case "${1}" in
+  download*)
+    if [ $# -le 1 ]; then
+      echo "download: missing url" 1>&2
+      help
+      exit 20
+    fi
+    download "${2}"
+    ;;
+  list*)
+    ## echo "arg[1]: ${1}" 1>&2
+    list
+    ;;
+  mount*)
+    if [ $# -le 2 ]; then
+      echo "mount: missing arguments" 1>&2
+      help
+      exit 40
+    fi
+    mount "${2}" "${3}"
+    ;;
+  unmount*)
+    if [ $# -le 1 ]; then
+      echo "unmount: missing serverID" 1>&2
+      help
+      exit 30
+    fi
+    unmount "${2}"
+    ;;
+  *)
+    echo "what??" 1>&2
+    help
+    exit 10
+    ;;
+esac
